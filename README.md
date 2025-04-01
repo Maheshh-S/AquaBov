@@ -1,6 +1,6 @@
 # 🌊🐄 AquaBov – AI-Powered Cattle Breed Detection & Smart Assistance
 
-![AquaBov Banner](https://via.placeholder.com/1200x400?text=AquaBov+-+AI+for+Farmers)
+![AquaBov Banner](/images/cow-logo.png)
 
 🔗 **[Live Demo](#)** | 🐝 **[Project Repository](https://github.com/Maheshh-S/AquaBov/)** | 💡 **Empowering Farmers with AI**
 
