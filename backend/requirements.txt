@@ -1,0 +1,11 @@
+flask
+opencv-python
+pillow
+numpy
+onnxruntime
+ultralytics
+requests
+python-dotenv
+google-generativeai
+flask-cors
+
