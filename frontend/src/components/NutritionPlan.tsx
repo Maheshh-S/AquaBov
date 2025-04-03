@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useReactToPrint } from 'react-to-print';
 import { X, Loader2, Leaf, Wheat, Droplets, Apple, Download, Upload } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,6 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import axios from 'axios';
-import { usePDF } from 'react-to-pdf';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
@@ -59,9 +59,24 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
   const [file, setFile] = useState<File | null>(null);
   const [isDetectingBreed, setIsDetectingBreed] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const { toPDF, targetRef } = usePDF({ 
-    filename: `nutrition-plan-${breed || 'cow'}.pdf`,
-    page: { margin: 20 }
+  
+  const printRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    content: () => printRef.current,
+    pageStyle: `
+      @page { 
+        size: auto;  
+        margin: 20mm;
+      }
+      @media print {
+        body { 
+          -webkit-print-color-adjust: exact; 
+          print-color-adjust: exact;
+        }
+      }
+    `,
+    documentTitle: `nutrition-plan-${breed || 'cow'}`,
   });
 
   const nutritionCategories = [
@@ -211,9 +226,55 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
     }
   };
 
-  const handleDownloadPDF = () => {
-    toPDF();
-  };
+  const renderNutritionPlanContent = () => (
+    <div className="mt-6 space-y-6">
+      {weatherInfo && (
+        <div className="bg-white/90 rounded-lg p-3 text-sm text-ghibli-brown-dark mb-4 shadow-sm">
+          <div className="flex items-center justify-center gap-2">
+            <span className="font-medium">🌤️ {weatherInfo}</span>
+          </div>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {nutritionPlan.map((item, index) => (
+          <div 
+            key={index} 
+            className="bg-white/90 backdrop-blur-sm rounded-xl p-5 flex flex-col gap-3 shadow-md border border-ghibli-yellow/10 hover:shadow-lg transition-shadow"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`rounded-full p-2 ${item.color}`}>
+                {item.icon}
+              </div>
+              <div>
+                <h4 className="font-bold text-lg text-ghibli-brown-dark">
+                  {item.name}
+                </h4>
+                <Badge variant="outline" className={`mt-1 ${item.color.replace('text-', 'text-')}`}>
+                  {item.type}
+                </Badge>
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="font-semibold text-ghibli-green-dark">
+                Amount: <span className="font-normal text-ghibli-brown">{item.amount}</span>
+              </p>
+              <p className="text-sm text-ghibli-brown mt-2">
+                {item.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-ghibli-yellow/10 rounded-xl p-4 mt-4 border border-ghibli-yellow/20">
+        <p className="text-sm text-ghibli-brown-dark">
+          <strong>📝 Note:</strong> This plan should be adjusted based on your cow's age, weight, production level, and season. Always ensure fresh water is available at all times.
+          <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
+        </p>
+      </div>
+    </div>
+  );
 
   return (
     <section id="nutrition" className="py-20 bg-gradient-to-b from-ghibli-blue/10 to-white">
@@ -243,7 +304,7 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                 {breed ? (
                   <>
                     <Leaf className="mr-2 h-5 w-5" />
-                    View {breed} Nutrition Plan
+                    View <span className="text-red-600">{breed}</span> Nutrition Plan
                   </>
                 ) : (
                   <>
@@ -253,182 +314,209 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                 )}
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden rounded-2xl border-ghibli-yellow/20 shadow-xl">
-              <div className="bg-gradient-to-b from-ghibli-green/20 to-ghibli-yellow/10 px-6 py-8 relative" ref={targetRef}>
-                {breed ? (
-                  <>
-                    <DialogHeader className="text-center">
-                      <DialogTitle className="text-3xl font-bold text-ghibli-brown-dark">
-                        {breed} Nutrition Plan
-                      </DialogTitle>
-                      <div className="text-ghibli-brown mt-2">
-                        Custom feeding recommendations for optimal health
-                      </div>
-                    </DialogHeader>
-                    
-                    {isLoading ? (
-                      <div className="py-16 flex flex-col items-center">
-                        <Loader2 className="h-12 w-12 text-ghibli-green animate-spin mb-4" />
-                        <p className="text-ghibli-brown-dark text-lg mb-4">
-                          Creating Your Custom Plan
-                        </p>
-                        <Progress value={65} className="w-48 h-2 bg-white/50" />
-                        <p className="text-sm text-ghibli-brown mt-4">
-                          Analyzing {breed} characteristics and current conditions...
+            <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden rounded-2xl border-ghibli-yellow/20 shadow-xl max-h-[90vh]">
+              <div className="bg-gradient-to-b from-ghibli-green/20 to-ghibli-yellow/10 px-6 py-8 max-h-[80vh] overflow-y-auto">
+                {/* Printable content */}
+                <div ref={printRef} className="print:p-6">
+                  {breed && (
+                    <>
+                      <div className="hidden print:block">
+                        <h1 className="text-3xl font-bold text-ghibli-brown-dark text-center">
+                          <span className="text-red-600">{breed}</span> Nutrition Plan
+                        </h1>
+                        <p className="text-ghibli-brown text-center mt-2">
+                          Custom feeding recommendations for optimal health
                         </p>
                       </div>
-                    ) : (
-                      <div className="mt-6 space-y-6">
-                        {weatherInfo && (
-                          <div className="bg-white/90 rounded-lg p-3 text-sm text-ghibli-brown-dark mb-4 shadow-sm">
-                            <div className="flex items-center justify-center gap-2">
-                              <span className="font-medium">🌤️ {weatherInfo}</span>
+                      
+                      {!isLoading && (
+                        <>
+                          {weatherInfo && (
+                            <div className="bg-white/90 rounded-lg p-3 text-sm text-ghibli-brown-dark mb-4 shadow-sm">
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="font-medium">🌤️ {weatherInfo}</span>
+                              </div>
                             </div>
+                          )}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {nutritionPlan.map((item, index) => (
+                              <div 
+                                key={index} 
+                                className="bg-white/90 backdrop-blur-sm rounded-xl p-5 flex flex-col gap-3 shadow-md border border-ghibli-yellow/10"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className={`rounded-full p-2 ${item.color}`}>
+                                    {item.icon}
+                                  </div>
+                                  <div>
+                                    <h4 className="font-bold text-lg text-ghibli-brown-dark">
+                                      {item.name}
+                                    </h4>
+                                    <Badge variant="outline" className={`mt-1 ${item.color.replace('text-', 'text-')}`}>
+                                      {item.type}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="mt-2">
+                                  <p className="font-semibold text-ghibli-green-dark">
+                                    Amount: <span className="font-normal text-ghibli-brown">{item.amount}</span>
+                                  </p>
+                                  <p className="text-sm text-ghibli-brown mt-2">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        )}
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {nutritionPlan.map((item, index) => (
-                            <div 
-                              key={index} 
-                              className="bg-white/90 backdrop-blur-sm rounded-xl p-5 flex flex-col gap-3 shadow-md border border-ghibli-yellow/10 hover:shadow-lg transition-shadow"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className={`rounded-full p-2 ${item.color}`}>
-                                  {item.icon}
-                                </div>
-                                <div>
-                                  <h4 className="font-bold text-lg text-ghibli-brown-dark">
-                                    {item.name}
-                                  </h4>
-                                  <Badge variant="outline" className={`mt-1 ${item.color.replace('text-', 'text-')}`}>
-                                    {item.type}
-                                  </Badge>
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <p className="font-semibold text-ghibli-green-dark">
-                                  Amount: <span className="font-normal text-ghibli-brown">{item.amount}</span>
-                                </p>
-                                <p className="text-sm text-ghibli-brown mt-2">
-                                  {item.description}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
+
+                          <div className="bg-ghibli-yellow/10 rounded-xl p-4 mt-4 border border-ghibli-yellow/20">
+                            <p className="text-sm text-ghibli-brown-dark">
+                              <strong>📝 Note:</strong> This plan should be adjusted based on your cow's age, weight, production level, and season. Always ensure fresh water is available at all times.
+                              <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+                
+                {/* Visible content */}
+                <div>
+                  {breed ? (
+                    <>
+                      <DialogHeader className="text-center">
+                        <DialogTitle className="text-3xl font-bold text-ghibli-brown-dark">
+                          <span className="text-red-600">{breed}</span> Nutrition Plan
+                        </DialogTitle>
+                        <div className="text-ghibli-brown mt-2">
+                          Custom feeding recommendations for optimal health
                         </div>
-
-                        <div className="bg-ghibli-yellow/10 rounded-xl p-4 mt-4 border border-ghibli-yellow/20">
-                          <p className="text-sm text-ghibli-brown-dark">
-                            <strong>📝 Note:</strong> This plan should be adjusted based on your cow's age, weight, production level, and season. Always ensure fresh water is available at all times.
-                            <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
-
+                      </DialogHeader>
+                      
+                      {isLoading ? (
+                        <div className="py-16 flex flex-col items-center">
+                          <Loader2 className="h-12 w-12 text-ghibli-green animate-spin mb-4" />
+                          <p className="text-ghibli-brown-dark text-lg mb-4">
+                            Creating Your Custom Plan
+                          </p>
+                          <Progress value={65} className="w-48 h-2 bg-white/50" />
+                          <p className="text-sm text-ghibli-brown mt-4">
+                            Analyzing <span className="text-red-600">{breed}</span> characteristics and current conditions...
                           </p>
                         </div>
-                        
-                        <div className="text-center mt-6 pt-4">
-                          <Button 
-                            onClick={handleDownloadPDF}
-                            className="bg-ghibli-green hover:bg-ghibli-green-dark px-8 py-6 text-lg shadow-md"
-                          >
-                            <Download className="mr-2 h-5 w-5" />
-                            Download Nutrition Plan PDF
-                          </Button>
+                      ) : (
+                        <>
+                          {renderNutritionPlanContent()}
+                          <div className="text-center mt-6 pt-4 pb-6">
+                            <Button 
+                              onClick={handlePrint}
+                              className="bg-ghibli-green hover:bg-ghibli-green-dark px-8 py-6 text-lg shadow-md"
+                            >
+                              <Download className="mr-2 h-5 w-5" />
+                              Download Nutrition Plan PDF
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="py-8 px-6">
+                      <DialogHeader className="text-center">
+                        <DialogTitle className="text-2xl font-bold text-ghibli-brown-dark">
+                          Detect Your Cow's Breed
+                        </DialogTitle>
+                        <div className="text-ghibli-brown mt-2">
+                          Upload an image to get customized recommendations
+                          <p className="text-red-700 font-bold">
+                            We are working to make the plans more accurate and real-time. Stay tuned!  
+                            <p className="text-green-600">
+                              If it's not generating, please click the <strong>X</strong> (close button) at the top right and try again.
+                            </p>
+                          </p>
                         </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="py-8 px-6">
-                    <DialogHeader className="text-center">
-                      <DialogTitle className="text-2xl font-bold text-ghibli-brown-dark">
-                        Detect Your Cow's Breed
-                      </DialogTitle>
-                      <div className="text-ghibli-brown mt-2">
-                        Upload an image to get customized recommendations
-                        <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
-
-                      </div>
-                    </DialogHeader>
-                    
-                    <div className="mt-6 space-y-6">
-                      <Alert className="bg-ghibli-yellow/20 border-ghibli-yellow/30">
-                        <Leaf className="h-5 w-5" />
-                        <AlertTitle className="font-medium">Breed Detection Required</AlertTitle>
-                        <AlertDescription>
-                          Please upload a clear image of your cow to detect its breed and get a customized nutrition plan.
-                        </AlertDescription>
-                      </Alert>
+                      </DialogHeader>
                       
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-center w-full">
-                          <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-ghibli-green/30 border-dashed rounded-xl cursor-pointer bg-white/80 hover:bg-white/90 transition-colors">
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
-                              <Upload className="w-10 h-10 mb-3 text-ghibli-green" />
-                              <p className="mb-2 text-sm text-ghibli-brown">
-                                <span className="font-semibold">Click to upload</span> or drag and drop
-                              </p>
-                              <p className="text-xs text-ghibli-brown/70">
-                                PNG, JPG, JPEG (MAX. 5MB)
-                              </p>
-                            </div>
-                            <input 
-                              id="dropzone-file" 
-                              type="file" 
-                              className="hidden" 
-                              accept="image/*"
-                              onChange={handleFileChange}
-                            />
-                          </label>
-                        </div>
+                      <div className="mt-6 space-y-6">
+                        <Alert className="bg-ghibli-yellow/20 border-ghibli-yellow/30">
+                          <Leaf className="h-5 w-5" />
+                          <AlertTitle className="font-medium">Breed Detection Required</AlertTitle>
+                          <AlertDescription>
+                            Please upload a clear image of your cow to detect its breed and get a customized nutrition plan.
+                          </AlertDescription>
+                        </Alert>
                         
-                        {file && (
-                          <div className="bg-white/90 rounded-lg p-3 flex items-center justify-between shadow-sm">
-                            <div className="flex items-center space-x-3">
-                              <img 
-                                src={URL.createObjectURL(file)} 
-                                alt="Preview" 
-                                className="h-12 w-12 object-cover rounded-lg"
-                              />
-                              <div>
-                                <p className="text-sm font-medium text-ghibli-brown-dark truncate max-w-xs">
-                                  {file.name}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-center w-full">
+                            <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-ghibli-green/30 border-dashed rounded-xl cursor-pointer bg-white/80 hover:bg-white/90 transition-colors">
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
+                                <Upload className="w-10 h-10 mb-3 text-ghibli-green" />
+                                <p className="mb-2 text-sm text-ghibli-brown">
+                                  <span className="font-semibold">Click to upload</span> or drag and drop
                                 </p>
                                 <p className="text-xs text-ghibli-brown/70">
-                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  PNG, JPG, JPEG (MAX. 5MB)
                                 </p>
                               </div>
-                            </div>
-                            <button 
-                              onClick={() => setFile(null)}
-                              className="text-ghibli-brown/50 hover:text-ghibli-brown transition-colors"
-                            >
-                              <X className="h-5 w-5" />
-                            </button>
+                              <input 
+                                id="dropzone-file" 
+                                type="file" 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={handleFileChange}
+                              />
+                            </label>
                           </div>
-                        )}
+                          
+                          {file && (
+                            <div className="bg-white/90 rounded-lg p-3 flex items-center justify-between shadow-sm">
+                              <div className="flex items-center space-x-3">
+                                <img 
+                                  src={URL.createObjectURL(file)} 
+                                  alt="Preview" 
+                                  className="h-12 w-12 object-cover rounded-lg"
+                                />
+                                <div>
+                                  <p className="text-sm font-medium text-ghibli-brown-dark truncate max-w-xs">
+                                    {file.name}
+                                  </p>
+                                  <p className="text-xs text-ghibli-brown/70">
+                                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  </p>
+                                </div>
+                              </div>
+                              <button 
+                                onClick={() => setFile(null)}
+                                className="text-ghibli-brown/50 hover:text-ghibli-brown transition-colors"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <Button
+                          onClick={detectBreed}
+                          disabled={!file || isDetectingBreed}
+                          className="w-full bg-ghibli-green hover:bg-ghibli-green-dark py-6 text-lg transition-all hover:scale-[1.02]"
+                        >
+                          {isDetectingBreed ? (
+                            <>
+                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                              Detecting Breed...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="mr-2 h-5 w-5" />
+                              Detect Breed and Get Plan
+                            </>
+                          )}
+                        </Button>
                       </div>
-                      
-                      <Button
-                        onClick={detectBreed}
-                        disabled={!file || isDetectingBreed}
-                        className="w-full bg-ghibli-green hover:bg-ghibli-green-dark py-6 text-lg transition-all hover:scale-[1.02]"
-                      >
-                        {isDetectingBreed ? (
-                          <>
-                            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            Detecting Breed...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="mr-2 h-5 w-5" />
-                            Detect Breed and Get Plan
-                          </>
-                        )}
-                      </Button>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </DialogContent>
           </Dialog>
@@ -438,7 +526,6 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
               ? `✨ Our AI has analyzed your ${breed} and created a specialized nutrition plan.`
               : '📷 Upload a cow image to analyze and get customized feeding recommendations.'}
               <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
-
           </p>
         </div>
       </div>
