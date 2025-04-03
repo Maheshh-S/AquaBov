@@ -74,6 +74,9 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
           -webkit-print-color-adjust: exact; 
           print-color-adjust: exact;
         }
+        .print-hidden {
+          display: none;
+        }
       }
     `,
     documentTitle: `nutrition-plan-${breed || 'cow'}`,
@@ -227,7 +230,7 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
   };
 
   const renderNutritionPlanContent = () => (
-    <div className="mt-6 space-y-6">
+    <div className="mt-6 space-y-6 print-hidden">
       {weatherInfo && (
         <div className="bg-white/90 rounded-lg p-3 text-sm text-ghibli-brown-dark mb-4 shadow-sm">
           <div className="flex items-center justify-center gap-2">
@@ -270,7 +273,7 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
       <div className="bg-ghibli-yellow/10 rounded-xl p-4 mt-4 border border-ghibli-yellow/20">
         <p className="text-sm text-ghibli-brown-dark">
           <strong>📝 Note:</strong> This plan should be adjusted based on your cow's age, weight, production level, and season. Always ensure fresh water is available at all times.
-          <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
+          <span className="text-red-700 font-bold block mt-2">We are working to make the plans more accurate and real-time. Stay tuned!</span>
         </p>
       </div>
     </div>
@@ -332,18 +335,18 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                       {!isLoading && (
                         <>
                           {weatherInfo && (
-                            <div className="bg-white/90 rounded-lg p-3 text-sm text-ghibli-brown-dark mb-4 shadow-sm">
+                            <div className="bg-white/90 rounded-lg p-3 text-sm text-ghibli-brown-dark mb-4 shadow-sm print:block">
                               <div className="flex items-center justify-center gap-2">
                                 <span className="font-medium">🌤️ {weatherInfo}</span>
                               </div>
                             </div>
                           )}
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:block">
                             {nutritionPlan.map((item, index) => (
                               <div 
                                 key={index} 
-                                className="bg-white/90 backdrop-blur-sm rounded-xl p-5 flex flex-col gap-3 shadow-md border border-ghibli-yellow/10"
+                                className="bg-white/90 rounded-xl p-5 flex flex-col gap-3 shadow-md border border-ghibli-yellow/10 print:break-inside-avoid"
                               >
                                 <div className="flex items-center gap-3">
                                   <div className={`rounded-full p-2 ${item.color}`}>
@@ -370,10 +373,10 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                             ))}
                           </div>
 
-                          <div className="bg-ghibli-yellow/10 rounded-xl p-4 mt-4 border border-ghibli-yellow/20">
+                          <div className="bg-ghibli-yellow/10 rounded-xl p-4 mt-4 border border-ghibli-yellow/20 print:block">
                             <p className="text-sm text-ghibli-brown-dark">
                               <strong>📝 Note:</strong> This plan should be adjusted based on your cow's age, weight, production level, and season. Always ensure fresh water is available at all times.
-                              <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
+                              <span className="text-red-700 font-bold block mt-2">We are working to make the plans more accurate and real-time. Stay tuned!</span>
                             </p>
                           </div>
                         </>
@@ -383,7 +386,7 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                 </div>
                 
                 {/* Visible content */}
-                <div>
+                <div className="print-hidden">
                   {breed ? (
                     <>
                       <DialogHeader className="text-center">
@@ -411,8 +414,10 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                           {renderNutritionPlanContent()}
                           <div className="text-center mt-6 pt-4 pb-6">
                             <Button 
-                              onClick={handlePrint}
-                              className="bg-ghibli-green hover:bg-ghibli-green-dark px-8 py-6 text-lg shadow-md"
+                              onClick={() => {
+                                handlePrint();
+                              }}
+                              className="ghibli-btn bg-ghibli-green hover:bg-ghibli-green-dark px-8 py-6 text-lg shadow-md"
                             >
                               <Download className="mr-2 h-5 w-5" />
                               Download Nutrition Plan PDF
@@ -422,19 +427,19 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                       )}
                     </>
                   ) : (
-                    <div className="py-8 px-6">
+                    <div className="py-8 px-6 print-hidden">
                       <DialogHeader className="text-center">
                         <DialogTitle className="text-2xl font-bold text-ghibli-brown-dark">
                           Detect Your Cow's Breed
                         </DialogTitle>
                         <div className="text-ghibli-brown mt-2">
                           Upload an image to get customized recommendations
-                          <p className="text-red-700 font-bold">
+                          <span className="text-red-700 font-bold block">
                             We are working to make the plans more accurate and real-time. Stay tuned!  
-                            <p className="text-green-600">
+                            <span className="text-green-600 block">
                               If it's not generating, please click the <strong>X</strong> (close button) at the top right and try again.
-                            </p>
-                          </p>
+                            </span>
+                          </span>
                         </div>
                       </DialogHeader>
                       
@@ -499,7 +504,7 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
                         <Button
                           onClick={detectBreed}
                           disabled={!file || isDetectingBreed}
-                          className="w-full bg-ghibli-green hover:bg-ghibli-green-dark py-6 text-lg transition-all hover:scale-[1.02]"
+                          className="w-full ghibli-btn bg-ghibli-green hover:bg-ghibli-green-dark py-6 text-lg transition-all hover:scale-[1.02]"
                         >
                           {isDetectingBreed ? (
                             <>
@@ -525,7 +530,7 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
             {breed 
               ? `✨ Our AI has analyzed your ${breed} and created a specialized nutrition plan.`
               : '📷 Upload a cow image to analyze and get customized feeding recommendations.'}
-              <p className="text-red-700 font-bold">We are working to make the plans more accurate and real-time. Stay tuned!</p>
+            <span className="text-red-700 font-bold block">We are working to make the plans more accurate and real-time. Stay tuned!</span>
           </p>
         </div>
       </div>
