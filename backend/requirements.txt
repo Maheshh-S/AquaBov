@@ -1,10 +1,9 @@
 flask
 opencv-python-headless
-
 pillow
 numpy
 onnxruntime
-# ultralytics
+ultralytics
 requests
 python-dotenv
 google-generativeai
