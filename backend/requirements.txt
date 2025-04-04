@@ -1,5 +1,6 @@
 flask
-opencv-python
+opencv-python-headless
+
 pillow
 numpy
 onnxruntime
@@ -9,6 +10,6 @@ python-dotenv
 google-generativeai
 flask-cors
 
-torch==2.0.1
-torchvision==0.15.2
-ultralytics==8.0.196
+torch
+torchvision
+
