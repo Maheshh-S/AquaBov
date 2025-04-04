@@ -56,9 +56,13 @@ const ChatSupport = () => {
     
     try {
       // Call your Flask backend's /ask endpoint
-      const response = await axios.post('http://localhost:8080/ask', {
-        query: input
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/ask`,
+        {
+          query: input
+        }
+      );
+      
 
       const answer = response.data.answer.join('\n'); // Convert bullet points to new lines
       

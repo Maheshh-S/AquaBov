@@ -103,9 +103,14 @@ const BreedIdentification = () => {
       const formData = new FormData();
       formData.append('image', imageFile);
 
-      const predictResponse = await axios.post('http://localhost:8080/predict', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const predictResponse = await axios.post(
+        `${import.meta.env.VITE_API_URL}/predict`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
+      
 
       const predictionData = predictResponse.data;
 
@@ -132,9 +137,13 @@ const BreedIdentification = () => {
         });
       }
 
-      const suggestionsResponse = await axios.post('http://localhost:8080/suggest_breeds', {
-        breed: predictionData.breed
-      });
+      const suggestionsResponse = await axios.post(
+        `${import.meta.env.VITE_API_URL}/suggest_breeds`,
+        {
+          breed: predictionData.breed
+        }
+      );
+      
 
       const suggestionsData = suggestionsResponse.data;
 

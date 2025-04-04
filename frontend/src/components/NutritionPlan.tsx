@@ -114,12 +114,17 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response = await axios.post('http://localhost:8080/predict', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        timeout: 10000
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/predict`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 10000
+        }
+      );
+      
 
       if (response.data.breed) {
         setBreed(response.data.breed);
@@ -141,10 +146,11 @@ const NutritionPlan = ({ breed: initialBreed }: { breed: string | null }) => {
     setApiError(null);
     try {
       const response = await axios.post<NutritionPlanResponse>(
-        'http://localhost:8080/nutrition', 
+        `${import.meta.env.VITE_API_URL}/nutrition`, 
         { breed: breed },
         { timeout: 10000 }
       );
+      
 
       if (response.data.success && response.data.plan) {
         const { forage, grain, liquid, supplement } = response.data.plan;
