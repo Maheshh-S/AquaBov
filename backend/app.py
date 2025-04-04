@@ -297,5 +297,9 @@ def extract_value(section_text: str, field_name: str):
     match = re.search(pattern, section_text, re.IGNORECASE)
     return match.group(1).strip() if match else None
 
+import os
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
+
