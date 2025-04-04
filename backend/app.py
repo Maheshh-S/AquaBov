@@ -7,8 +7,9 @@ from ultralytics import YOLO
 from PIL import Image
 from io import BytesIO
 from flask_cors import CORS
-import re  # Add this with other imports at the top
+import re
 from dotenv import load_dotenv
+import json
 
 # Load environment variables
 load_dotenv()
@@ -17,8 +18,20 @@ GEMINI_MODEL = "gemini-1.5-pro-latest"
 
 app = Flask(__name__)
 CORS(app)
-# Load YOLOv8 model
-model = YOLO("best.pt")
+
+# 1. File Path Handling and Model Loading with Error Checking
+script_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(script_dir, "best.pt")
+
+# 3. Memory Optimization and 4. Model Loading Optimization
+model = None
+try:
+    model = YOLO(model_path)
+    model.to('cpu')  # Force CPU usage
+    print(f"Model loaded successfully on device: {model.device}")
+except Exception as e:
+    print(f"Error loading model: {str(e)}")
+    model = None
 
 # Cattle breed class names
 CLASS_NAMES = {
@@ -30,9 +43,6 @@ CLASS_NAMES = {
     25: "Red Dane", 26: "Red Sindhi", 27: "Sahiwal", 28: "Tharparkar", 29: "Toda",
     30: "Umblachery", 31: "Vechur"
 }
-
-
-import json
 
 def fetch_gemini_response(prompt):
     """Fetch response from Gemini API and process correctly"""
@@ -50,60 +60,73 @@ def fetch_gemini_response(prompt):
         if "candidates" in response_data and response_data["candidates"]:
             raw_text = response_data["candidates"][0]["content"]["parts"][0]["text"]
             
-            # Check if the response contains a JSON block
             if "```json" in raw_text:
                 try:
-                    json_text = raw_text.split("```json\n")[1].split("\n```")[0]  # Extract JSON part
-                    parsed_data = json.loads(json_text)  # Convert string to JSON
-                    return {"suggestions": parsed_data}  # Wrap in a dictionary
+                    json_text = raw_text.split("```json\n")[1].split("\n```")[0]
+                    parsed_data = json.loads(json_text)
+                    return {"suggestions": parsed_data}
                 except (json.JSONDecodeError, IndexError):
                     return {"error": "Failed to parse AI response JSON"}
             
-            return {"text": raw_text}  # Return as plain text if not JSON
+            return {"text": raw_text}
         return {"error": "No valid response from AI"}
     except Exception as e:
         return {"error": f"Failed to fetch response: {str(e)}"}
 
-
+# 3. Health Check Endpoint
+@app.route("/health")
+def health_check():
+    return jsonify({
+        "status": "healthy" if model is not None else "unhealthy",
+        "device": str(model.device) if model is not None else "none",
+        "model_loaded": model is not None
+    })
 
 @app.route("/")
 def home():
     return "AquaBov API is Running!"
 
-
+# 6. Enhanced Error Handling in Predict Route
 @app.route("/predict", methods=["POST"])
 def predict():
     """Predict cattle breed from image"""
-    if "image" not in request.files:
-        return jsonify({"error": "No image uploaded"}), 400
+    if model is None:
+        return jsonify({"error": "Model not loaded"}), 500
+        
+    try:
+        if "image" not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
 
-    file = request.files["image"]
-    if file.filename == "" or not file.filename.lower().endswith((".png", ".jpg", ".jpeg")):
-        return jsonify({"error": "Invalid file format. Only PNG, JPG, JPEG allowed."}), 400
+        file = request.files["image"]
+        if file.filename == "" or not file.filename.lower().endswith((".png", ".jpg", ".jpeg")):
+            return jsonify({"error": "Invalid file format. Only PNG, JPG, JPEG allowed."}), 400
 
-    image = Image.open(BytesIO(file.read())).convert("RGB")
-    results = model.predict(image, conf=0.5)
+        # Convert image to RGB numpy array
+        image = np.array(Image.open(BytesIO(file.read())))
+        
+        # Run prediction with explicit CPU usage
+        results = model.predict(image, conf=0.5, device='cpu')
 
-    if len(results[0].boxes) == 0:
-        return jsonify({"message": "⚠️ Could not confidently identify the breed. Try a clearer image."})
+        if len(results[0].boxes) == 0:
+            return jsonify({"message": "⚠️ Could not confidently identify the breed. Try a clearer image."})
 
-    box = results[0].boxes[0]
-    class_id = int(box.cls[0])
-    confidence = float(box.conf[0])
-    breed_name = CLASS_NAMES.get(class_id, "Unknown Breed")
+        box = results[0].boxes[0]
+        class_id = int(box.cls[0])
+        confidence = float(box.conf[0])
+        breed_name = CLASS_NAMES.get(class_id, "Unknown Breed")
 
-    # Extract height and width from YOLO model
-    height_cm = round(float(box.xywh[0][3]), 2)  # Height from bounding box
-    width_cm = round(float(box.xywh[0][2]), 2)   # Width from bounding box
+        height_cm = round(float(box.xywh[0][3]), 2)
+        width_cm = round(float(box.xywh[0][2]), 2)
 
-    return jsonify({
-        "breed": breed_name,
-        "confidence": round(confidence, 2),
-        "height_cm": height_cm,
-        "width_cm": width_cm,
-        "message": "✅ Prediction successful! Ensure a clear image for better accuracy."
-    })
-
+        return jsonify({
+            "breed": breed_name,
+            "confidence": round(confidence, 2),
+            "height_cm": height_cm,
+            "width_cm": width_cm,
+            "message": "✅ Prediction successful! Ensure a clear image for better accuracy."
+        })
+    except Exception as e:
+        return jsonify({"error": f"Prediction failed: {str(e)}"}), 500
 
 @app.route("/suggest_breeds", methods=["POST"])
 def suggest_breeds():
@@ -124,26 +147,18 @@ def suggest_breeds():
     """
     
     try:
-        response = fetch_gemini_response(prompt)  # Get AI-generated suggestions
-
-        # Check if response is already a dictionary (which is common in many API calls)
+        response = fetch_gemini_response(prompt)
         if isinstance(response, dict):
             suggestions = response.get("suggestions", [])
         else:
-            # If the response is in a different format, handle it (or raise an error)
             return jsonify({"error": "Invalid response format from Gemini"}), 500
 
-        # If the suggestions are in a valid format, return them
         if isinstance(suggestions, list):
             return jsonify({"suggestions": suggestions})
 
-        # If suggestions aren't found or are not in the correct format
         return jsonify({"error": "No valid suggestions found"}), 400
-
     except Exception as e:
-        # Catch any other errors and log them
         return jsonify({"error": f"Error fetching breed suggestions: {str(e)}"}), 500
-
 
 @app.route("/ask", methods=["POST"])
 def chat_support():
@@ -156,12 +171,8 @@ def chat_support():
 
     prompt = f"Provide a Precise small length answer as a cattle expert :\n{user_query}"
     response = fetch_gemini_response(prompt)  
-
-    # Ensure response is in a structured format
     ai_text = response.get("text", "No response from AI")
-
-    # Convert response to a bullet-point list
-    bullet_points = ai_text.split("\n")  # Split response by new lines
+    bullet_points = ai_text.split("\n")
     formatted_response = [f"• {point.strip()}" for point in bullet_points if point.strip()]
 
     return jsonify({"answer": formatted_response})
@@ -201,8 +212,6 @@ def nutrition():
 
     try:
         response = fetch_gemini_response(prompt)
-        
-        # Debugging: Print the raw response
         print("Gemini Response:", response)
 
         if 'error' in response:
@@ -219,7 +228,6 @@ def nutrition():
                 "details": str(response)
             }), 500
 
-        # Parse the text response
         plan_data = parse_nutrition_response(response['text'])
         
         return jsonify({
@@ -237,7 +245,6 @@ def nutrition():
 
 def parse_nutrition_response(text: str):
     """Parse the nutrition plan from text response"""
-    # Initialize with defaults
     plan = {
         "forage": {
             "name": "Alfalfa Hay",
@@ -261,7 +268,6 @@ def parse_nutrition_response(text: str):
         }
     }
 
-    # Try to extract information from text
     sections = {
         "forage": extract_section(text, "Forage"),
         "grain": extract_section(text, "Grain"),
@@ -269,7 +275,6 @@ def parse_nutrition_response(text: str):
         "supplement": extract_section(text, "Supplement")
     }
 
-    # Update plan with extracted data
     for category, section_text in sections.items():
         if section_text:
             name = extract_value(section_text, "Name")
@@ -297,9 +302,6 @@ def extract_value(section_text: str, field_name: str):
     match = re.search(pattern, section_text, re.IGNORECASE)
     return match.group(1).strip() if match else None
 
-import os
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
-
