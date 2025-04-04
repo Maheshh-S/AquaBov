@@ -138,12 +138,12 @@ const BreedIdentification = () => {
       }
 
       const suggestionsResponse = await axios.post(
-        `${import.meta.env.VITE_API_URL}/suggest_breeds`,
-        {
-          breed: predictionData.breed
-        }
-      );
-      
+  `${import.meta.env.VITE_API_URL}/suggest_breeds`,
+  {
+    breed: predictionData.breed
+  }
+);
+
 
       const suggestionsData = suggestionsResponse.data;
 
