@@ -54,7 +54,7 @@ graph TD;
 ### 🔬 Breeding Suggestion Engine
 ```mermaid
 graph TD;
-    B[Detected Breed] --> C[Gemini AI Suggests Crossbreeds]
+    B["Detected Breed"] --> C["Gemini AI Suggests Crossbreeds"]
     C --> D[Verify with Compatibility Database]
     D --> E[Rank by Health, Yield, Climate Fitness]
     E --> F[Create Visual List for User]
@@ -66,7 +66,7 @@ graph TD;
     Q[User Asks Question] --> A[Intent Detection + NLP Layer]
     A --> B[Gemini AI Prompt Handler]
     B --> C[Answer Generation]
-    C --> D[Translate (Kannada/English)]
+    C --> D["Translate (Kannada/English)"]
     D --> E[Chat UI Display]
 ```
 
