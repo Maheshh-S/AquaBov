@@ -1,6 +1,6 @@
 # 🌊🐄 AquaBov – AI-Powered Cattle Breed Detection & Smart Assistance
 
-![AquaBov Banner](https://via.placeholder.com/1200x400?text=AquaBov+-+AI+for+Farmers)
+![AquaBov Logo](frontend/public/images/cow-logo.png)
 
 🔗 **[Live Demo](https://aqua-bov.vercel.app/)** | 🐝 **[Project Repository](https://github.com/Maheshh-S/AquaBov/)** | 💡 **Empowering Farmers with AI**
 
@@ -27,16 +27,16 @@
 ### 🗘️ Step-by-Step Flow
 ```mermaid
 graph TD;
-    A[Upload Cow Image] --> B[Preprocessing Layer]
-    B --> C[Breed Detection Model]
-    C -->|Prediction| D[MongoDB - Breed Data Storage]
-    D --> E[Breeding Suggestion Engine (Gemini AI)]
-    D --> F[Nutrition Planner - Weather + Breed Data]
-    D --> G[Chat Assistant - Dr. Moo]
-    E --> H[Top Crossbreeding Suggestions]
-    F --> I[Customized Diet Plan]
-    G --> J[Answer Farmer Queries]
-    H --> K[Display All Insights on UI]
+    A["Upload Cow Image"] --> B["Preprocessing Layer"]
+    B --> C["Breed Detection Model"]
+    C -->|"Prediction"| D["MongoDB - Breed Data Storage"]
+    D --> E["Breeding Suggestion Engine (Gemini AI)"]
+    D --> F["Nutrition Planner - Weather + Breed Data"]
+    D --> G["Chat Assistant - Dr. Moo"]
+    E --> H["Top Crossbreeding Suggestions"]
+    F --> I["Customized Diet Plan"]
+    G --> J["Answer Farmer Queries"]
+    H --> K["Display All Insights on UI"]
     I --> K
     J --> K
 ```
@@ -44,40 +44,40 @@ graph TD;
 ### 📸 Image Upload & Detection
 ```mermaid
 graph TD;
-    U[Farmer Uploads Image] --> P[Image Enhancement]
-    P --> R[ML Breed Detection Model]
-    R --> S[Filter Results by Confidence]
-    S --> D[Store Data in MongoDB]
-    D --> M[Track History / Metadata]
+    U["Farmer Uploads Image"] --> P["Image Enhancement"]
+    P --> R["ML Breed Detection Model"]
+    R --> S["Filter Results by Confidence"]
+    S --> D["Store Data in MongoDB"]
+    D --> M["Track History / Metadata"]
 ```
 
 ### 🔬 Breeding Suggestion Engine
 ```mermaid
 graph TD;
     B["Detected Breed"] --> C["Gemini AI Suggests Crossbreeds"]
-    C --> D[Verify with Compatibility Database]
-    D --> E[Rank by Health, Yield, Climate Fitness]
-    E --> F[Create Visual List for User]
+    C --> D["Verify with Compatibility Database"]
+    D --> E["Rank by Health, Yield, Climate Fitness"]
+    E --> F["Create Visual List for User"]
 ```
 
 ### 💬 Dr. Moo Chatbot
 ```mermaid
 graph TD;
-    Q[User Asks Question] --> A[Intent Detection + NLP Layer]
-    A --> B[Gemini AI Prompt Handler]
-    B --> C[Answer Generation]
+    Q["User Asks Question"] --> A["Intent Detection + NLP Layer"]
+    A --> B["Gemini AI Prompt Handler"]
+    B --> C["Answer Generation"]
     C --> D["Translate (Kannada/English)"]
-    D --> E[Chat UI Display]
+    D --> E["Chat UI Display"]
 ```
 
 ### 🍽️ Nutrition Planning Engine
 ```mermaid
 graph TD;
-    I[Input: Age, Breed, Weight, Weather] --> A[Nutrition Recommendation Engine]
-    A --> B[Match with Global Feed DB]
-    B --> C[Breed-specific Adjustments]
-    C --> D[Generate Meal Charts]
-    D --> E[Push as Scrollable Cards in UI]
+    I["Input: Age, Breed, Weight, Weather"] --> A["Nutrition Recommendation Engine"]
+    A --> B["Match with Global Feed DB"]
+    B --> C["Breed-specific Adjustments"]
+    C --> D["Generate Meal Charts"]
+    D --> E["Push as Scrollable Cards in UI"]
 ```
 
 ---
