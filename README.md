@@ -1,6 +1,11 @@
 # 🌊🐄 AquaBov – AI-Powered Cattle Breed Detection & Smart Assistance
 
-![AquaBov Logo](frontend/public/images/cow-logo.png)
+![AquaBov Logo]
+<p align="left">
+  <img src="frontend/public/images/cow-logo.png" alt="AquaBov Logo" width="60" style="vertical-align: middle;"/>
+  <span style="font-size: 1.8em; font-weight: bold; margin-left: 10px;">AquaBov – AI for Farmers</span>
+</p>
+
 
 🔗 **[Live Demo](https://aqua-bov.vercel.app/)** | 🐝 **[Project Repository](https://github.com/Maheshh-S/AquaBov/)** | 💡 **Empowering Farmers with AI**
 
@@ -118,7 +123,6 @@ graph TD;
 
 ## 📷 Live Demo Preview
 
-![Breed Detection Demo](https://via.placeholder.com/600x350?text=Breed+Detected+%3A+Gir+%7C+Confidence+%3A+96%25)
 
 - **Breed Detected:** Gir
 - **Confidence:** 96.2%
