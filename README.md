@@ -140,7 +140,7 @@ graph TD;
 
 ## 📞 Contact
 
-- ✉️ **Email:** your-email@example.com  
+- ✉️ **Email:** dev4mahesh@gmail.com  
 - 🐝 **GitHub:** [Maheshh-S](https://github.com/Maheshh-S)  
 - 🌐 **Live Site:** [aqua-bov.vercel.app](https://aqua-bov.vercel.app/)
 
